@@ -18,7 +18,7 @@ export default function HomePage() {
               </p>
               <div className="mt-8 sm:max-w-lg sm:mx-auto sm:text-center lg:text-left lg:mx-0">
                 <a
-                  href="/signup"
+                  href="/sign-up"
                   target="_blank"
                 >
                   <Button className="bg-purple-700 hover:bg-purple-800 text-white rounded-full text-lg px-8 py-4 inline-flex items-center justify-center">
