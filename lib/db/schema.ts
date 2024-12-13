@@ -122,11 +122,16 @@ export type ActivityLog = typeof activityLogs.$inferSelect;
 export type NewActivityLog = typeof activityLogs.$inferInsert;
 export type Invitation = typeof invitations.$inferSelect;
 export type NewInvitation = typeof invitations.$inferInsert;
+export type InvitationWithTeam = Invitation & {
+  team: Pick<Team, 'id' | 'name' | 'createdAt'>;
+  invitedByUser: Pick<User, 'id' | 'name' | 'email'>;
+};
 export type TeamDataWithMembers = Team & {
   teamMembers: (TeamMember & {
     user: Pick<User, 'id' | 'name' | 'email'>;
   })[];
 };
+
 
 export enum ActivityType {
   SIGN_UP = 'SIGN_UP',
@@ -139,4 +144,7 @@ export enum ActivityType {
   REMOVE_TEAM_MEMBER = 'REMOVE_TEAM_MEMBER',
   INVITE_TEAM_MEMBER = 'INVITE_TEAM_MEMBER',
   ACCEPT_INVITATION = 'ACCEPT_INVITATION',
+  DECLINE_INVITATION = 'DECLINE_INVITATION',
+  CANCEL_INVITATION = 'CANCEL_INVITATION',
+  LEAVE_TEAM = 'LEAVE_TEAM',
 }

@@ -1,11 +1,20 @@
-import { desc, and, eq, isNull } from 'drizzle-orm';
-import { db } from './drizzle';
-import { activityLogs, teamMembers, teams, users } from './schema';
-import { cookies } from 'next/headers';
-import { verifyToken } from '@/lib/auth/session';
+import { desc, and, eq, isNull } from "drizzle-orm";
+import { db } from "./drizzle";
+import {
+  activityLogs,
+  teamMembers,
+  teams,
+  users,
+  invitations,
+  Invitation,
+  InvitationWithTeam,
+  Team
+} from "./schema";
+import { cookies } from "next/headers";
+import { verifyToken } from "@/lib/auth/session";
 
 export async function getUser() {
-  const sessionCookie = (await cookies()).get('session');
+  const sessionCookie = (await cookies()).get("session");
   if (!sessionCookie || !sessionCookie.value) {
     return null;
   }
@@ -14,7 +23,7 @@ export async function getUser() {
   if (
     !sessionData ||
     !sessionData.user ||
-    typeof sessionData.user.id !== 'number'
+    typeof sessionData.user.id !== "number"
   ) {
     return null;
   }
@@ -81,7 +90,7 @@ export async function getUserWithTeam(userId: number) {
 export async function getActivityLogs() {
   const user = await getUser();
   if (!user) {
-    throw new Error('User not authenticated');
+    throw new Error("User not authenticated");
   }
 
   return await db
@@ -125,23 +134,86 @@ export async function getTeamForUser(userId: number) {
     },
   });
 
-  
-
   return result?.teamMembers[0]?.team || null;
 }
 
-export async function getTeamsForUser(userId: number) {
+export async function getTeamsForUser(userId: number) : Promise<Team[]> {
   const result = await db
     .select({
+      id: teams.id,
       teamId: teams.id,
       name: teams.name,
       planName: teams.planName,
       subscriptionStatus: teams.subscriptionStatus,
       createdAt: teams.createdAt,
+      stripeCustomerId: teams.stripeCustomerId,
+      stripeSubscriptionId: teams.stripeSubscriptionId,
+      stripeProductId: teams.stripeProductId,
+      updatedAt: teams.updatedAt,
     })
     .from(teamMembers)
     .innerJoin(teams, eq(teamMembers.teamId, teams.id))
     .where(eq(teamMembers.userId, userId));
 
   return result;
+}
+
+export async function getTeamMembers(teamId: number) {
+  const result = await db
+    .select({
+      id: teamMembers.id,
+      userId: teamMembers.userId,
+      name: users.name,
+      email: users.email,
+      role: teamMembers.role,
+      joinedAt: teamMembers.joinedAt,
+    })
+    .from(teamMembers)
+    .innerJoin(users, eq(teamMembers.userId, users.id))
+    .where(eq(teamMembers.teamId, teamId));
+
+  return result;
+}
+
+export async function getInvitationsForUser(
+  userEmail: string
+): Promise<InvitationWithTeam[]> {
+  const result = await db
+    .select({
+      id: invitations.id,
+      email: invitations.email,
+      role: invitations.role,
+      invitedAt: invitations.invitedAt,
+      status: invitations.status,
+      teamId: teams.id,
+      team: {
+        id: teams.id,
+        name: teams.name,
+        createdAt: teams.createdAt,
+      },
+      invitedBy: invitations.invitedBy,
+      invitedByUser: {
+        id: users.id,
+        name: users.name,
+        email: users.email,
+      },
+    })
+    .from(invitations)
+    .innerJoin(teams, eq(invitations.teamId, teams.id)) // Join with teams to get team details
+    .innerJoin(users, eq(invitations.invitedBy, users.id)) // Join with users to get inviter details
+    .where(eq(invitations.email, userEmail)); // Filter for invitations sent to the user
+
+  return result.map((row) => ({
+    ...row,
+    team: {
+      id: row.team.id,
+      name: row.team.name,
+      createdAt: row.team.createdAt,
+    },
+    invitedByUser: {
+      id: row.invitedByUser.id,
+      name: row.invitedByUser.name,
+      email: row.invitedByUser.email,
+    },
+  }));
 }
