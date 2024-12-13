@@ -56,7 +56,7 @@ export function Home({ teamData }: { teamData: TeamDataWithMembers }) {
       </Card>
       <Card className="mb-8">
         <CardHeader>
-          <CardTitle>Team Members</CardTitle>
+          <CardTitle>Teams</CardTitle>
         </CardHeader>
         <CardContent>
           <ul className="space-y-4">

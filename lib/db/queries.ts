@@ -125,5 +125,23 @@ export async function getTeamForUser(userId: number) {
     },
   });
 
+  
+
   return result?.teamMembers[0]?.team || null;
+}
+
+export async function getTeamsForUser(userId: number) {
+  const result = await db
+    .select({
+      teamId: teams.id,
+      name: teams.name,
+      planName: teams.planName,
+      subscriptionStatus: teams.subscriptionStatus,
+      createdAt: teams.createdAt,
+    })
+    .from(teamMembers)
+    .innerJoin(teams, eq(teamMembers.teamId, teams.id))
+    .where(eq(teamMembers.userId, userId));
+
+  return result;
 }
