@@ -67,6 +67,71 @@ export const invitations = pgTable('invitations', {
   invitedAt: timestamp('invited_at').notNull().defaultNow(),
   status: varchar('status', { length: 20 }).notNull().default('pending'),
 });
+export const projects = pgTable('projects', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  description: text('description'),
+  teamId: integer('team_id')
+    .notNull()
+    .references(() => teams.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const tables = pgTable('tables', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  projectId: integer('project_id')
+    .notNull()
+    .references(() => projects.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const columns = pgTable('columns', {
+  id: serial('id').primaryKey(),
+  name: varchar('name', { length: 255 }).notNull(),
+  tableId: integer('table_id')
+    .notNull()
+    .references(() => tables.id),
+  dataType: varchar('data_type', { length: 50 }).notNull(), // e.g., 'text', 'number', 'boolean', 'date'
+  orderIndex: integer('order_index').notNull(), // Order of columns in the table
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const rows = pgTable('rows', {
+  id: serial('id').primaryKey(),
+  tableId: integer('table_id')
+    .notNull()
+    .references(() => tables.id),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+  updatedAt: timestamp('updated_at').notNull().defaultNow(),
+});
+
+export const cellValues = pgTable('cell_values', {
+  id: serial('id').primaryKey(),
+  rowId: integer('row_id')
+    .notNull()
+    .references(() => rows.id),
+  columnId: integer('column_id')
+    .notNull()
+    .references(() => columns.id),
+  value: text('value'), // Stores values as text; can be cast dynamically based on column dataType
+});
+
+export const cellReferences = pgTable('cell_references', {
+  id: serial('id').primaryKey(),
+  sourceCellId: integer('source_cell_id')
+    .notNull()
+    .references(() => cellValues.id),
+  targetCellId: integer('target_cell_id')
+    .notNull()
+    .references(() => cellValues.id),
+  referenceType: varchar('reference_type', { length: 50 }), // Optional: Define relationship type (e.g., dependency, lookup)
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+});
+
 
 export const teamsRelations = relations(teams, ({ many }) => ({
   teamMembers: many(teamMembers),
@@ -109,6 +174,62 @@ export const activityLogsRelations = relations(activityLogs, ({ one }) => ({
   user: one(users, {
     fields: [activityLogs.userId],
     references: [users.id],
+  }),
+}));
+
+export const projectsRelations = relations(projects, ({ one, many }) => ({
+  team: one(teams, {
+    fields: [projects.teamId],
+    references: [teams.id],
+  }),
+  tables: many(tables),
+}));
+
+export const tablesRelations = relations(tables, ({ one, many }) => ({
+  project: one(projects, {
+    fields: [tables.projectId],
+    references: [projects.id],
+  }),
+  columns: many(columns),
+  rows: many(rows),
+}));
+
+export const columnsRelations = relations(columns, ({ one }) => ({
+  table: one(tables, {
+    fields: [columns.tableId],
+    references: [tables.id],
+  }),
+}));
+
+export const rowsRelations = relations(rows, ({ one, many }) => ({
+  table: one(tables, {
+    fields: [rows.tableId],
+    references: [tables.id],
+  }),
+  cellValues: many(cellValues),
+}));
+
+export const cellValuesRelations = relations(cellValues, ({ one }) => ({
+  row: one(rows, {
+    fields: [cellValues.rowId],
+    references: [rows.id],
+  }),
+  column: one(columns, {
+    fields: [cellValues.columnId],
+    references: [columns.id],
+  }),
+}));
+
+export const cellReferencesRelations = relations(cellReferences, ({ one }) => ({
+  sourceCell: one(cellValues, {
+    fields: [cellReferences.sourceCellId],
+    references: [cellValues.id],
+    relationName: 'sourceCell',
+  }),
+  targetCell: one(cellValues, {
+    fields: [cellReferences.targetCellId],
+    references: [cellValues.id],
+    relationName: 'targetCell',
   }),
 }));
 
