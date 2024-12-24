@@ -137,6 +137,40 @@ export async function getTeamForUser(userId: number) {
   return result?.teamMembers[0]?.team || null;
 }
 
+
+export async function getTeamForUserByTeamId(userId: number, teamId?: number) {
+  const result = await db.query.users.findFirst({
+    where: eq(users.id, userId),
+    with: {
+      teamMembers: {
+        where: teamId ? eq(teamMembers.teamId, teamId) : undefined,
+        with: {
+          team: {
+            with: {
+              teamMembers: {
+                with: {
+                  user: {
+                    columns: {
+                      id: true,
+                      name: true,
+                      email: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
+    },
+  });
+
+  // If teamId is provided, return the matched team or null if not found.
+  // If teamId is not provided, return the first team or null.
+  return result?.teamMembers.length ? result.teamMembers[0].team : null;
+}
+
+
 export async function getTeamsForUser(userId: number) : Promise<Team[]> {
   const result = await db
     .select({
