@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation';
-import { Settings } from './settings';
+import { Settings } from './components/settings';
 import { getTeamForUser, getUser } from '@/lib/db/queries';
 
 export default async function SettingsPage() {
