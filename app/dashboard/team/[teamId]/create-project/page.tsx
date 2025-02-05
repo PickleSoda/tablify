@@ -1,6 +1,5 @@
 import { redirect } from 'next/navigation';
 import { getTeamForUserByTeamId, getUser, getProjectsByTeamId } from '@/lib/db/queries';
-import { Projects } from '../components/team-projects';
 import { ProjectForm } from '../components/project-form';
 
 interface SettingsPageProps {

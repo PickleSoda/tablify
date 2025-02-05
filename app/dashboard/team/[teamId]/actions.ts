@@ -40,16 +40,14 @@ async function logActivity(
   await db.insert(activityLogs).values(newActivity);
 }
 
-const removeTeamMemberSchema = z.object({
-  memberId: z.number(),
-});
-
 const removeProjectSchema = z.object({
-  projectId: z.number(),
+  projectId: z.string(),
 });
 
 const createProjectSchema = z.object({
-  teamId: z.string().email(),
+  teamId: z.string(),
+  name: z.string(),
+  description: z.string(),
 });
 
 export const removeProject = validatedActionWithUser(
@@ -57,6 +55,7 @@ export const removeProject = validatedActionWithUser(
   async (data, _, user) => {
     const { projectId } = data;
     const userWithTeam = await getUserWithTeam(user.id);
+    const id = parseInt(projectId);
 
     if (!userWithTeam?.teamId) {
       return { error: "User is not part of a team" };
@@ -66,7 +65,7 @@ export const removeProject = validatedActionWithUser(
       .delete(projects)
       .where(
         and(
-          eq(projects.id, projectId),
+          eq(projects.id, id),
           eq(projects.teamId, userWithTeam.teamId)
         )
       );
@@ -84,17 +83,18 @@ export const removeProject = validatedActionWithUser(
 export const createProject = validatedActionWithUser(
   createProjectSchema,
   async (data, _, user) => {
-    const { teamId } = data;
+    const { teamId, name, description } = data;
+    console.log("teamId", teamId);
     const userWithTeam = await getUserWithTeam(user.id);
-
+    console.log("userWithTeam", userWithTeam);
     if (!userWithTeam?.teamId) {
       return { error: "User is not part of a team" };
     }
 
     // Create a new invitation
     await db.insert(projects).values({
-      name: "name",
-      description: "description",
+      name,
+      description,
       teamId: userWithTeam.teamId,
     });
 
