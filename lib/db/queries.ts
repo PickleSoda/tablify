@@ -1,4 +1,4 @@
-import { desc, and, eq, isNull } from "drizzle-orm";
+import { desc, and, eq, isNull, asc } from "drizzle-orm";
 import { db } from "./drizzle";
 import {
   activityLogs,
@@ -9,6 +9,7 @@ import {
   Invitation,
   InvitationWithTeam,
   projects,
+  tables,rows, columns, cellValues,
   Team,
 } from "./schema";
 import { cookies } from "next/headers";
@@ -260,4 +261,72 @@ export async function getProjectsByTeamId(id:number) {
     .where(eq(projects.teamId, id));
 
   return result;
+}
+
+export const getProjectDetails = async (projectId: number) => {
+  const result = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.id, projectId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : null;
+}
+
+export async function getTablesByProjectId(projectId: number) {
+  return await db
+    .select()
+    .from(tables)
+    .where(eq(tables.projectId, projectId));
+}
+
+export async function getColumnsByTableId(tableId: number) {
+  return await db
+    .select({
+      id: columns.id,
+      name: columns.name,
+      dataType: columns.dataType,
+      orderIndex: columns.orderIndex,
+    })
+    .from(columns)
+    .where(eq(columns.tableId, tableId))
+    .orderBy(asc(columns.orderIndex));
+}
+export async function getRowsAndCellsByTableId(tableId: number) {
+  const rowData = await db
+    .select({
+      rowId: rows.id,
+      cellId: cellValues.id,
+      columnId: cellValues.columnId,
+      value: cellValues.value,
+    })
+    .from(rows)
+    .leftJoin(cellValues, eq(rows.id, cellValues.rowId))
+    .where(eq(rows.tableId, tableId))
+    .orderBy(asc(rows.id), asc(cellValues.columnId)); // Ensures cells are ordered by their columns
+
+  return rowData.reduce((acc, { rowId, columnId, value }) => {
+    if (!acc[rowId]) {
+      acc[rowId] = { rowId, cells: {} };
+    }
+    if (columnId !== null) {
+      acc[rowId].cells[columnId] = value ?? '';
+    }
+    return acc;
+  }, {} as Record<number, { rowId: number; cells: Record<number, string> }>);
+}
+export async function getCellsByTableId(tableId: number) {
+  const rowsWithCells = await db
+    .select({
+      rowId: rows.id,
+      columnName: columns.name,
+      cellValue: cellValues.value,
+    })
+    .from(rows)
+    .leftJoin(cellValues, eq(rows.id, cellValues.rowId))
+    .leftJoin(columns, eq(cellValues.columnId, columns.id))
+    .where(eq(rows.tableId, tableId))
+    .orderBy(rows.id, columns.orderIndex);
+
+  return rowsWithCells;
 }
