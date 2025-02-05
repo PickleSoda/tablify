@@ -1,9 +1,21 @@
-import {
-  getCellsByTableId,
-} from "@/lib/db/queries";
+"use client";
 
+import React, { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  useReactTable,
+  getCoreRowModel,
+  flexRender,
+  ColumnDef,
+} from "@tanstack/react-table";
+
+interface TableComponentProps {
+  tableId: number;
+}
+
+// Function to structure API response into row-column format
 function structureTableData(cellsData: any[]) {
-  const structuredData: any = {};
+  const structuredData: Record<string, Record<string, any>> = {};
   cellsData.forEach(({ rowId, columnName, cellValue }) => {
     if (!structuredData[rowId]) {
       structuredData[rowId] = {};
@@ -13,30 +25,76 @@ function structureTableData(cellsData: any[]) {
   return structuredData;
 }
 
-export async function TableComponent({ tableId }: { tableId: number }) {
-  const cellsData = await getCellsByTableId(tableId);
-  const structuredData = structureTableData(cellsData);
+export default function TableComponent({ tableId }: TableComponentProps) {
+  // Fetch table data using TanStack Query
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["tableData", tableId],
+    queryFn: async () => {
+      const response = await fetch(`/api/project/table?tableId=${tableId}`);
+      const result = await response.json();
+      if (!result.success) {
+        throw new Error(result.error || "Failed to fetch table data");
+      }
+      return structureTableData(result.cells);
+    },
+    staleTime: 60000, // Cache data for 1 minute
+  });
+
+  // Transform structured data into table rows
+  const tableData = useMemo(() => {
+    if (!data) return [];
+    return Object.entries(data).map(([rowId, columns]) => ({
+      id: rowId,
+      ...columns,
+    }));
+  }, [data]);
+
+  // Extract column definitions dynamically
+  const columns = useMemo<ColumnDef<any, any>[]>(() => {
+    if (!tableData.length) return [];
+    return Object.keys(tableData[0]).map((col) => ({
+      accessorKey: col,
+      header: col,
+      cell: (info: any) => info.getValue(),
+    }));
+  }, [tableData]);
+
+  // Define table instance
+  const table = useReactTable({
+    data: tableData,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+  });
+
+  if (isLoading) return <p>Loading table...</p>;
+  if (error) return <p className="text-red-500">Error: {error.message}</p>;
 
   return (
-    <table>
-      <thead>
-        <tr>
-          {Object.keys(
-            structuredData[Object.keys(structuredData)[0]] || {}
-          ).map((colName) => (
-            <th key={colName}>{colName}</th>
+    <div className="p-4 border rounded shadow">
+      <table className="min-w-full border-collapse border border-gray-300">
+        <thead>
+          {table.getHeaderGroups().map((headerGroup) => (
+            <tr key={headerGroup.id} className="bg-gray-100">
+              {headerGroup.headers.map((header) => (
+                <th key={header.id} className="border border-gray-300 p-2">
+                  {flexRender(header.column.columnDef.header, header.getContext())}
+                </th>
+              ))}
+            </tr>
           ))}
-        </tr>
-      </thead>
-      <tbody>
-        {Object.entries(structuredData).map(([rowId, columns]) => (
-          <tr key={rowId}>
-            {Object.entries(columns).map(([colName, value]) => (
-              <td key={colName}>{value}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
+        </thead>
+        <tbody>
+          {table.getRowModel().rows.map((row) => (
+            <tr key={row.id} className="hover:bg-gray-50">
+              {row.getVisibleCells().map((cell) => (
+                <td key={cell.id} className="border border-gray-300 p-2">
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }

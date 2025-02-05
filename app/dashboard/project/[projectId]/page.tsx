@@ -4,7 +4,7 @@ import {
   getUser,
   getTablesByProjectId,
 } from "@/lib/db/queries";
-import { TableComponent } from "../components/table-component";
+import TableComponent from "../components/table-component";
 
 interface SettingsPageProps {
   params: { projectId: string }; // Dynamic route parameter
