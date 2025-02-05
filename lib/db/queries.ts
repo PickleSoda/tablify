@@ -8,7 +8,8 @@ import {
   invitations,
   Invitation,
   InvitationWithTeam,
-  Team
+  projects,
+  Team,
 } from "./schema";
 import { cookies } from "next/headers";
 import { verifyToken } from "@/lib/auth/session";
@@ -250,4 +251,13 @@ export async function getInvitationsForUser(
       email: row.invitedByUser.email,
     },
   }));
+}
+
+export async function getProjectsByTeamId(id:number) {
+  const result = await db
+    .select()
+    .from(projects)
+    .where(eq(projects.teamId, id));
+
+  return result;
 }

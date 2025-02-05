@@ -1,13 +1,13 @@
 import { redirect } from 'next/navigation';
-import { Settings } from '../components/settings';
 import { getTeamForUserByTeamId, getUser, getProjectsByTeamId } from '@/lib/db/queries';
-import { Projects } from './components/team-projects';
+import { Projects } from '../components/team-projects';
+import { ProjectForm } from '../components/project-form';
 
 interface SettingsPageProps {
   params: { teamId: string }; // Dynamic route parameter
 }
 
-export default async function ProjectsPage({ params }: SettingsPageProps) {
+export default async function SettingsPage({ params }: SettingsPageProps) {
   const user = await getUser();
   const { teamId } = await params
   if (!user) {
@@ -27,5 +27,8 @@ export default async function ProjectsPage({ params }: SettingsPageProps) {
     throw new Error('Team not found');
   }
 
-  return <Projects projects={projects} teamId={id}/>;
+  return <section>
+    <ProjectForm teamId={id} />
+
+  </section>
 }

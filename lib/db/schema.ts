@@ -252,6 +252,7 @@ export type TeamDataWithMembers = Team & {
     user: Pick<User, 'id' | 'name' | 'email'>;
   })[];
 };
+export type Project = typeof projects.$inferSelect;
 
 
 export enum ActivityType {
