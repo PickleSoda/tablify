@@ -2,7 +2,7 @@ import { z } from "zod"
 
 import { columns } from "./columns"
 import { DataTable } from "./data-table"
-import { taskSchema } from "./data/schema"
+import { rowSchema } from "./data/schema"
 import mockTasks from './data/mockdata'
 
 
@@ -10,7 +10,7 @@ import mockTasks from './data/mockdata'
 function getTasks() {
 //   const tasks = JSON.parse(mockTasks.toString())
 
-  return z.array(taskSchema).parse(mockTasks)
+  return z.array(rowSchema).parse(mockTasks)
 }
 
 export default function TaskPage() {

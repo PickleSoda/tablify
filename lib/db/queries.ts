@@ -321,6 +321,7 @@ export async function getCellsByTableId(tableId: number) {
       rowId: rows.id,
       columnName: columns.name,
       cellValue: cellValues.value,
+      dataType: columns.dataType,
     })
     .from(rows)
     .leftJoin(cellValues, eq(rows.id, cellValues.rowId))

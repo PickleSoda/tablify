@@ -7,7 +7,7 @@ import {
 import { DataTable } from "@/components/table/data-table";
 import { columns } from "@/components/table/columns";
 
-import { taskSchema } from "@/components/table/data/schema"
+import { rowSchema } from "@/components/table/data/schema"
 import mockTasks from '@/components/table/data/mockdata'
 import { z } from "zod"
 
@@ -15,7 +15,7 @@ import { z } from "zod"
 function getTasks() {
 //   const tasks = JSON.parse(mockTasks.toString())
 
-  return z.array(taskSchema).parse(mockTasks)
+  return z.array(rowSchema).parse(mockTasks)
 }
 
 
