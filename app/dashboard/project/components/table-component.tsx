@@ -32,6 +32,7 @@ export default function TableComponent({ tableId }: TableComponentProps) {
     queryFn: async () => {
       const response = await fetch(`/api/project/table?tableId=${tableId}`);
       const result = await response.json();
+      console.log(result);
       if (!result.success) {
         throw new Error(result.error || "Failed to fetch table data");
       }
@@ -77,9 +78,15 @@ export default function TableComponent({ tableId }: TableComponentProps) {
             <tr key={headerGroup.id} className="bg-gray-100">
               {headerGroup.headers.map((header) => (
                 <th key={header.id} className="border border-gray-300 p-2">
-                  {flexRender(header.column.columnDef.header, header.getContext())}
+                  {flexRender(
+                    header.column.columnDef.header,
+                    header.getContext()
+                  )}
                 </th>
               ))}
+              <th className="border hover:bg-gray-200 border-gray-300 px-2 py-1 text-xl cursor-pointer">
+                +
+              </th>
             </tr>
           ))}
         </thead>
@@ -90,9 +97,18 @@ export default function TableComponent({ tableId }: TableComponentProps) {
                 <td key={cell.id} className="border border-gray-300 p-2">
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
                 </td>
+                
               ))}
+                        <td className="border border-gray-300 pl-2 py-1 text-xl cursor-pointer">
+                     
+                </td>
             </tr>
           ))}
+          <tr className="">
+            <td className="border hover:bg-gray-200 border-gray-300 pl-2 py-1 text-xl cursor-pointer">
+              +
+            </td>
+          </tr>
         </tbody>
       </table>
     </div>
