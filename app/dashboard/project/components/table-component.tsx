@@ -4,6 +4,7 @@ import React, { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { DataTable } from "@/components/table/data-table";
 import { columns } from "@/components/table/columns";
+import { useColumnMutations, ColumnAction, ColumnMutationPayload } from "@/components/table/hooks/use-column-mutations";
 import { generateColumns, CellData } from "@/components/table/generate-columns";
 interface TableComponentProps {
   tableId: number;
@@ -37,6 +38,16 @@ export default function TableComponent({ tableId }: TableComponentProps) {
     staleTime: 60000, // Cache data for 1 minute
   });
 
+
+  const columnMutation = useColumnMutations(tableId);
+
+  function handleColumnAction({columnId, actionType,  newName, newType }:ColumnMutationPayload) {
+
+    const id = data?.find((cell: any) => cell.columnName === columnId)?.columnId;
+
+    columnMutation.mutate({ columnId: id, actionType, newName, newType, tableId });
+  }
+
   // Transform structured data into table rows
   const tableData = useMemo(() => {
     if (!data) return [];
@@ -46,7 +57,7 @@ export default function TableComponent({ tableId }: TableComponentProps) {
     }));
   }, [data]);
 
-  const columns = useMemo(() => (data ? generateColumns(data) : []), [data]);
+  const columns = useMemo(() => (data ? generateColumns(data, handleColumnAction ) : []), [data]);
 
 
   if (isLoading) return <p>Loading table...</p>;

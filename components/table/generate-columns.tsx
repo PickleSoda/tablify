@@ -4,17 +4,30 @@ import { Badge } from "@/components/ui/badge";
 import { DataTableColumnHeader } from "./data-table-column-header";
 import { Row, Column } from "@tanstack/react-table";
 import { Row as row } from "./data/schema";
+import { dataType } from "./data/data";
+import { useColumnMutations, ColumnAction, ColumnMutationPayload } from "./hooks/use-column-mutations";
 
 // Sample Data
 export interface CellData {
   rowId: number;
   columnName: string;
   cellValue: string | number;
-  dataType: "text" | "number" | "boolean"; // Extend as needed
+  dataType: dataType; // Extend as needed
 }
 
 // Function to generate columns dynamically
-export function generateColumns(cells: CellData[]): ColumnDef<row>[] {
+export function generateColumns(cells: CellData[], dataDispatch: ({
+  actionType,
+  newName,
+  columnId,
+  newType,
+}: ColumnMutationPayload) => void): ColumnDef<row>[] {
+
+
+
+  
+
+
   const uniqueColumns = Array.from(
     new Set(cells.map((cell) => cell.columnName))
   );
@@ -87,8 +100,9 @@ export function generateColumns(cells: CellData[]): ColumnDef<row>[] {
           <DataTableColumnHeader
             column={column}
             title={columnName}
-            datatype={columnType}
-            dataDispatch={() => console.log(dispatchEvent)}
+            dataType={columnType}
+            dataDispatch={(e) => dataDispatch(e)}
+            
           />
         ),
         cell: getColumnRenderer({
@@ -107,7 +121,8 @@ export function generateColumns(cells: CellData[]): ColumnDef<row>[] {
           <DataTableColumnHeader
             column={column}
             title='+'
-            dataDispatch={() => console.log(dispatchEvent)}
+            dataDispatch={(e) => dataDispatch(e)}
+            addNewColumn={true}
           />
         ),
       },

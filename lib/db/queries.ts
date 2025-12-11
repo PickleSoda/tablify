@@ -319,6 +319,7 @@ export async function getCellsByTableId(tableId: number) {
   const rowsWithCells = await db
     .select({
       rowId: rows.id,
+      columnId: columns.id,
       columnName: columns.name,
       cellValue: cellValues.value,
       dataType: columns.dataType,
@@ -330,4 +331,55 @@ export async function getCellsByTableId(tableId: number) {
     .orderBy(rows.id, columns.orderIndex);
 
   return rowsWithCells;
+}
+
+
+export async function addColumn(tableId: number, columnName: string, dataType: string) {
+  
+  const [lastColumn] = await db
+    .select({ orderIndex: columns.orderIndex })
+    .from(columns)
+    .where(eq(columns.tableId, tableId))
+    .orderBy(desc(columns.orderIndex))
+    .limit(1); 
+
+  const orderIndex = lastColumn ? lastColumn.orderIndex + 1 : 0;
+
+  const [newColumn] = await db
+    .insert(columns)
+    .values({
+      tableId,
+      name: columnName,
+      dataType,
+      orderIndex,
+    })
+    .returning({ id: columns.id }); 
+
+  if (!newColumn) {
+    throw new Error("Failed to create column");
+  }
+
+  await db.insert(cellValues).values({
+    rowId: 1, 
+    columnId: newColumn.id,
+    value: "",
+  });
+
+  return newColumn;
+}
+
+export async function removeColumn(tableId: number, columnId: number) {
+  return await db.delete(columns).where(and(eq(columns.id, columnId), eq(columns.tableId, tableId)));
+}
+
+export async function editColumnName(tableId: number, columnId: number, newName: string) {
+  return await db.update(columns)
+    .set({ name: newName })
+    .where(and(eq(columns.id, columnId), eq(columns.tableId, tableId)));
+}
+
+export async function editColumnType(tableId: number, columnId: number, newType: string) {
+  return await db.update(columns)
+    .set({ dataType: newType })
+    .where(and(eq(columns.id, columnId), eq(columns.tableId, tableId)));
 }

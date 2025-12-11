@@ -9,6 +9,8 @@ import {
     XCircle,
   } from "lucide-react"
   
+  export type dataType = "text" | "number" | "boolean" | "date"
+  
   export const labels = [
     {
       value: "bug",
